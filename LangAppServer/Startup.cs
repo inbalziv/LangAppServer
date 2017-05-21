@@ -7,7 +7,7 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using System.ComponentModel;
 
-//using MongoDB.Driver.Core;
+using MongoDB.Driver.Core;
 //using MongoDB.Driver.Builders;
 //using MongoDB.Driver.GridFS;
 //using MongoDB.Driver.Linq;
@@ -23,8 +23,10 @@ namespace LangAppServer
         {
             ConfigureAuth(app);
             data _data = new data();
-            _data.insertData("1");
-          //  connectToDB();
+           // _data.modifyListName("1", "_listNameNew", "_listNameNew2");
+            _data.getData("1");
+           // _data.insertData("1");
+           //  connectToDB();
 
         }
         public void connectToDB()
@@ -54,144 +56,89 @@ namespace LangAppServer
         }
 
     }
-        public class data
+    public class data
     {//, Word[] words, string listName
-        public void insertData(string UID)
+        public void insertData(string uid)
+        {
+            //mock
+            uid = "1";
+            string _listName = "_listNameNew";
+            Word[] _words = new Word[]
+                {
+                    new Word {_front = "f1ee", _back =  "b1" },
+                    new Word {_front = "f2ee", _back =  "b2" }
+                };
+            string id;
+            //connect to Mongo            
+            var client = new MongoClient();
+            var db = client.GetDatabase("LanguageDB");
+            var collection = db.GetCollection<userStorage>("userStorage");
+            //create filter
+            var builder = Builders<userStorage>.Filter;
+
+            // search for UID only (with listName null) --> insert listName
+            var filterOnlyUID = builder.Eq("UID", uid) & builder.Eq("_listName", BsonNull.Value);
+            var insertListName = Builders<userStorage>.Update.Set("_listName", _listName);
+            var results = collection.UpdateOne(filterOnlyUID, insertListName);
+
+            //insert or update words for UID and listName, if listName not exist creates a new document
+            var filterListName = builder.Eq("UID", uid) & builder.Eq("_listName", _listName);
+            var modifyWords = Builders<userStorage>.Update.Set("_words", _words);
+            
+        // var resultsModifyWords = collection.FindOneAndUpdate(filterOnlyUID, insertListName);
+            var resultsModifyWords = collection.Find(filterListName).ToList();
+
+            //insert a new document
+           if (resultsModifyWords.Count == 0)
             {
-                
-                var client = new MongoClient();
-                var db = client.GetDatabase("LanguageDB");
-                var collection = db.GetCollection<userStorage>("userStorage");
-
-                var builder = Builders<userStorage>.Filter;
-                var filt = builder.Eq("UID", "1") & builder.Eq("_listName", "_listNameTest0");
-                //List<userStorage> cursor = collection.Find(filt).;
-            //  var filter = builder.ElemMatch(o => o.Users, user => user.Username == username && user.Password == password);
-                var results = collection.Find(filt).To;
-            foreach (userStorage item in results)
+                collection.InsertOne(new userStorage { UID = uid, _listName = _listName , _words = _words});
+            }
+            //Replace existing listName with the updated words - ObjectId("59206633c2d07835c4ccefbf")
+            else
             {
-                string json = item.ToJson();
+                collection.ReplaceOne(filterListName, new userStorage { _id = resultsModifyWords[0]._id, UID = uid, _listName = _listName, _words = _words });
             }
-                // var id = results.Find(x => x.UID == "1");
-                //  userStorage user = results.SingleOrDefault<userStorage>();
-                //  string id = results.SingleOrDefault<userStorage>._id;
-                // List<ObjectId> id = results.
-                //  Console.Write(list);
 
-                //{UID:'1','_listName':'_listNameTest0'}
-                // var results = collection.Find(query).ToBsonDocument();
+           //change listName - assuming it's possible _words is null
 
-            }
+
+    }
             public void removeData()
             {
                 MongoClient client = new MongoClient();
                 IMongoDatabase db = client.GetDatabase("LanguageDB");
                 var collection = db.GetCollection<userStorage>("userStorage");
-            }
-            public void getData()
+            // var results = collection.Find(filterOnlyUID).ToList();
+        }
+        public void getData(string uid)
+        {
+
+            MongoClient client = new MongoClient();
+            IMongoDatabase db = client.GetDatabase("LanguageDB");
+            var collection = db.GetCollection<userStorage>("userStorage");
+
+            var builder = Builders<userStorage>.Filter;
+            var filterUID = builder.Eq("UID", uid);
+            var results = collection.Find(filterUID).ToList();
+
+            foreach(userStorage item in results)
             {
-                MongoClient client = new MongoClient();
-                IMongoDatabase db = client.GetDatabase("LanguageDB");
-                var collection = db.GetCollection<userStorage>("userStorage");
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-
-            public void insertUID(string UID)
-            {
-                MongoClient client = new MongoClient();                
-                IMongoDatabase db = client.GetDatabase("LanguageDB");                
-                var collection = db.GetCollection<userStorage>("userStorage");
-
-                userStorage _userStorage = new userStorage
-                {
-                    UID = "2"                    
-                };
-                try
-                {
-                    collection.InsertOne(_userStorage);
-                }
-                catch (Win32Exception e)
-                {
-                    //UID already exist
-                    if (e.ErrorCode == 11000)
-                    {
-
-                    }
-                }
-            }
-            public void insertList(string UID, string listName)
-            {
-                if (isUserExist(UID))
-                { }
-                if (isListExist(listName))
-                { }
-            }
-            public void insertWords(string UID, Word[] words, string listName)
-            {
-                if (isUserExist(UID))
-                { }
-                if (isListExist(listName))
-                { }
-            }
-            public void removeWords(string UID, Word[] words, string listName)
-            {
-                if (isUserExist(UID))
-                { }
-                if (isListExist(listName))
-                { }
-            }
-            public void removeList(string UID, string listName)
-            {
-                if (isUserExist(UID))
-                { }
-                if (isListExist(listName))
-                { }
-            }
-            public void getLists(string UID)
-            {
-                string[] _lists;
-                if (isUserExist(UID))
-                { }
-
-                //  return _lists;
-            }
-            public void getWords(string UID, string listName)
-            {
-                string[] _words;
-                if (isUserExist(UID))
-                { }
-                if (isListExist(listName))
-                { }
-
-                // return _words;
-            }
-
-            private Boolean isUserExist(string UID)
-            {
-               // var collection = db.GetCollection<userStorage>("userStorage");
-                //  var results = collection.Find(x => UID == "2").ToString();
-                return false;
-            }
-            private Boolean isListExist(string listName)
-            {
-                return false;
+                
             }
 
         }
+        public void modifyListName(string uid,string oldListName, string newListName)
+        {
+            MongoClient client = new MongoClient();
+            IMongoDatabase db = client.GetDatabase("LanguageDB");
+            var collection = db.GetCollection<userStorage>("userStorage");
+
+            //search for UID + oldListName and modify to newListName if exist
+            var builder = Builders<userStorage>.Filter;
+            var filter = builder.Eq("UID", uid) & builder.Eq("_listName", oldListName);
+            var updateListName = Builders<userStorage>.Update.Set("_listName", newListName);
+            var results = collection.UpdateOne(filter, updateListName);            
+        }        
+    }
 }
 

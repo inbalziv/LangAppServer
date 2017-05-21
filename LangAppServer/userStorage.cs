@@ -8,9 +8,11 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LangAppServer
 {
+    [BsonIgnoreExtraElements]
     public class userStorage
     {
-        
+        [BsonId]
+        public ObjectId _id { get; set; }
         public string UID { get; set; }
         [BsonIgnoreIfNull]
         public string _listName { get; set; }
