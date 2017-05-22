@@ -102,7 +102,7 @@ namespace LangAppServer
            //change listName - assuming it's possible _words is null
 
 
-    }
+        }
             public void removeData()
             {
                 MongoClient client = new MongoClient();
@@ -112,18 +112,24 @@ namespace LangAppServer
         }
         public void getData(string uid)
         {
-
-            MongoClient client = new MongoClient();
+            var connectionString = "mongodb://localhost:27017";
+            var client = new MongoClient(connectionString);
+          //  var client = new MongoClient();
             IMongoDatabase db = client.GetDatabase("LanguageDB");
             var collection = db.GetCollection<userStorage>("userStorage");
 
             var builder = Builders<userStorage>.Filter;
             var filterUID = builder.Eq("UID", uid);
             var results = collection.Find(filterUID).ToList();
-
-            foreach(userStorage item in results)
+            //_cardsList.Add(_textBoxListName, new List<Card>());
+            LangDic _langDic = new LangDic();
+          //  Word[] wordsDB; ;
+            foreach (userStorage item in results)
             {
-                
+              //  wordsDB = new Word[item._words.Count()];
+
+                _langDic.CardLists.Add(item._listName, new List<Word>(item._words.ToList())); // item._id = null;
+
             }
 
         }
