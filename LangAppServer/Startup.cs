@@ -112,10 +112,10 @@ namespace LangAppServer
         }
         public void getData(string uid)
         {
-            var connectionString = "mongodb://localhost:27017";
-            var client = new MongoClient(connectionString);
-          //  var client = new MongoClient();
-            IMongoDatabase db = client.GetDatabase("LanguageDB");
+           // var connectionString = "mongodb://localhost:27017";
+          //  var client = new MongoClient(connectionString);
+            var client = new MongoClient();
+            var db = client.GetDatabase("LanguageDB");
             var collection = db.GetCollection<userStorage>("userStorage");
 
             var builder = Builders<userStorage>.Filter;
