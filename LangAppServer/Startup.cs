@@ -23,10 +23,14 @@ namespace LangAppServer
         {
             ConfigureAuth(app);
             data _data = new data();
-           // _data.modifyListName("1", "_listNameNew", "_listNameNew2");
-            _data.getData("1");
-           // _data.insertData("1");
-           //  connectToDB();
+            // connectToDB();
+            // _data.modifyListName("1", "_listNameNew", "_listNameNew2");
+            //_data.getData("2");
+            _data.insertData("1");
+            // _data.removeData("1", "_listNameDel", new Word { _front = "frontDel1", _back = "backDel1" });
+            //  connectToDB();
+            _data.removeData("1", "_listNameDel", null);
+
 
         }
         public void connectToDB()
@@ -44,29 +48,34 @@ namespace LangAppServer
             var collection = db.GetCollection<userStorage>("userStorage");
 
             // create the document 
-            
-                userStorage _userStorage = new userStorage
+            Word[] _words = new Word[]
                 {
-                    UID = "2"
-                    
+                    new Word {_front = "f1U1", _back =  "b1U1" },
+                    new Word {_front = "f2U1", _back =  "b2U1" }
                 };
+            userStorage _userStorage = new userStorage
+            {
+                UID = "2",
+                _listName = "list3"
 
-                collection.InsertOne(_userStorage);
-            
+
+            };
+
+            collection.InsertOne(_userStorage);
+
         }
 
     }
     public class data
-    {//, Word[] words, string listName
+    {
         public void insertData(string uid)
         {
-            //mock
-            uid = "1";
-            string _listName = "_listNameNew";
+
+            string _listName = "_listNameDel";
             Word[] _words = new Word[]
                 {
-                    new Word {_front = "f1ee", _back =  "b1" },
-                    new Word {_front = "f2ee", _back =  "b2" }
+                    new Word {_front = "frontDel1", _back =  "backDel1" },
+                    new Word {_front = "frontDel2", _back =  "backDel2" }
                 };
             string id;
             //connect to Mongo            
@@ -84,14 +93,14 @@ namespace LangAppServer
             //insert or update words for UID and listName, if listName not exist creates a new document
             var filterListName = builder.Eq("UID", uid) & builder.Eq("_listName", _listName);
             var modifyWords = Builders<userStorage>.Update.Set("_words", _words);
-            
-        // var resultsModifyWords = collection.FindOneAndUpdate(filterOnlyUID, insertListName);
+
+            // var resultsModifyWords = collection.FindOneAndUpdate(filterOnlyUID, insertListName);
             var resultsModifyWords = collection.Find(filterListName).ToList();
 
             //insert a new document
-           if (resultsModifyWords.Count == 0)
+            if (resultsModifyWords.Count == 0)
             {
-                collection.InsertOne(new userStorage { UID = uid, _listName = _listName , _words = _words});
+                collection.InsertOne(new userStorage { UID = uid, _listName = _listName, _words = _words });
             }
             //Replace existing listName with the updated words - ObjectId("59206633c2d07835c4ccefbf")
             else
@@ -99,41 +108,63 @@ namespace LangAppServer
                 collection.ReplaceOne(filterListName, new userStorage { _id = resultsModifyWords[0]._id, UID = uid, _listName = _listName, _words = _words });
             }
 
-           //change listName - assuming it's possible _words is null
+            //change listName - assuming it's possible _words is null
 
 
         }
-            public void removeData()
-            {
-                MongoClient client = new MongoClient();
-                IMongoDatabase db = client.GetDatabase("LanguageDB");
-                var collection = db.GetCollection<userStorage>("userStorage");
-            // var results = collection.Find(filterOnlyUID).ToList();
-        }
-        public void getData(string uid)
+        public void removeData(string UID, string listName, Word word)
         {
-           // var connectionString = "mongodb://localhost:27017";
-          //  var client = new MongoClient(connectionString);
+            var client = new MongoClient();
+            var db = client.GetDatabase("LanguageDB");
+            var collection = db.GetCollection<userStorage>("userStorage");
+            var builder = Builders<userStorage>.Filter;
+            var filterListName = builder.Eq("UID", UID) & builder.Eq("_listName", listName);
+
+            if (word != null)
+            {
+
+                var update = Builders<userStorage>.Update.PullFilter(c => c._words, s => s._front == word._front);
+                var result = collection.FindOneAndUpdate(filterListName, update);
+            }
+            else
+            {
+                var updateWords = Builders<userStorage>.Update.Unset(c => c._words);
+                var resultsWords = collection.FindOneAndUpdate(filterListName, updateWords);
+                var updateListName = Builders<userStorage>.Update.Unset(c => c._listName);
+                var resultsListName = collection.FindOneAndUpdate(filterListName, updateListName);              
+                
+            }
+        }
+
+
+
+        public LangDic getData(string uid)
+        {
+
             var client = new MongoClient();
             var db = client.GetDatabase("LanguageDB");
             var collection = db.GetCollection<userStorage>("userStorage");
 
+            //build dictionary by UID
             var builder = Builders<userStorage>.Filter;
             var filterUID = builder.Eq("UID", uid);
             var results = collection.Find(filterUID).ToList();
-            //_cardsList.Add(_textBoxListName, new List<Card>());
             LangDic _langDic = new LangDic();
-          //  Word[] wordsDB; ;
+
             foreach (userStorage item in results)
             {
-              //  wordsDB = new Word[item._words.Count()];
-
-                _langDic.CardLists.Add(item._listName, new List<Word>(item._words.ToList())); // item._id = null;
-
+                if (item._listName != null)
+                {
+                    if (item._words != null)
+                        _langDic.CardLists.Add(item._listName, new List<Word>(item._words.ToList()));
+                    else _langDic.CardLists.Add(item._listName, new List<Word>());
+                }
             }
+            return _langDic;
 
         }
-        public void modifyListName(string uid,string oldListName, string newListName)
+
+        public void modifyListName(string uid, string oldListName, string newListName)
         {
             MongoClient client = new MongoClient();
             IMongoDatabase db = client.GetDatabase("LanguageDB");
@@ -143,8 +174,9 @@ namespace LangAppServer
             var builder = Builders<userStorage>.Filter;
             var filter = builder.Eq("UID", uid) & builder.Eq("_listName", oldListName);
             var updateListName = Builders<userStorage>.Update.Set("_listName", newListName);
-            var results = collection.UpdateOne(filter, updateListName);            
-        }        
+            var results = collection.UpdateOne(filter, updateListName);
+        }
+
     }
 }
 
