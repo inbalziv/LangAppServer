@@ -8,9 +8,7 @@ using MongoDB.Bson;
 using System.ComponentModel;
 
 using MongoDB.Driver.Core;
-//using MongoDB.Driver.Builders;
-//using MongoDB.Driver.GridFS;
-//using MongoDB.Driver.Linq;
+using LangAppServer.Models;
 
 [assembly: OwinStartup(typeof(LangAppServer.Startup))]
 
@@ -22,24 +20,33 @@ namespace LangAppServer
         public void Configuration(IAppBuilder app)
         {
             ConfigureAuth(app);
-            data _data = new data();
-            // connectToDB();
-            // _data.modifyListName("1", "_listNameNew", "_listNameNew2");
-            //_data.getData("2");
-            _data.insertData("1");
-            // _data.removeData("1", "_listNameDel", new Word { _front = "frontDel1", _back = "backDel1" });
-            //  connectToDB();
-            _data.removeData("1", "_listNameDel", null);
-
-
+            MongoConnection _data = new MongoConnection(); 
+                       
+          //  _data.GetData("2");
+          //  services.AddTransient<userStorage>();
+          // services.AddMvc();
         }
+
+        
+        // MongoConnection _data = new MongoConnection();
+        // connectToDB();
+        // _data.modifyListName("1", "_listNameNew", "_listNameNew2");
+        //_data.getData("2");
+        //   _data.insertData("5");
+        // _data.removeData("1", "_listNameDel", new Word { _front = "frontDel1", _back = "backDel1" });
+        //  connectToDB();
+        //   _data.removeData("1", "_listNameDel", null);
+
+
+    }
+    /*
         public void connectToDB()
         {
 
 
             /* if mongo is not local
             var connectionString = "mongodb://localhost:27017";
-            var client = new MongoClient(connectionString); */
+            var client = new MongoClient(connectionString); 
             MongoClient client = new MongoClient();
             //create DB
             IMongoDatabase db = client.GetDatabase("LanguageDB");
@@ -65,7 +72,8 @@ namespace LangAppServer
 
         }
 
-    }
+    } */
+    /*
     public class data
     {
         public void insertData(string uid)
@@ -177,6 +185,6 @@ namespace LangAppServer
             var results = collection.UpdateOne(filter, updateListName);
         }
 
-    }
+    } */
 }
 

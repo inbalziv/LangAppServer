@@ -19,8 +19,7 @@ using LangAppServer.Results;
 
 namespace LangAppServer.Controllers
 {
-    [Authorize]
-    [RoutePrefix("api/Account")]
+    [Authorize]  
     public class AccountController : ApiController
     {
         private const string LocalLoginProvider = "Local";
